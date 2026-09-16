@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trắc nghiệm Phật giáo</title>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --card:#ffffff;
+    --text:#172033;
+    --muted:#687386;
+    --primary:#4f8df7;
+    --primary-dark:#2f6fe0;
+    --correct:#21a366;
+    --wrong:#e55353;
+    --border:#e5e9f2;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:linear-gradient(135deg,#eef4ff,#f8f9fc);
+    color:var(--text);
+    min-height:100vh;
+    padding:24px 14px;
+  }
+  .app{width:min(760px,100%);margin:auto}
+  header{margin-bottom:18px}
+  .eyebrow{font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--primary-dark);text-transform:uppercase}
+  h1{margin:6px 0 8px;font-size:clamp(25px,5vw,38px);line-height:1.15}
+  .subtitle{color:var(--muted);margin:0;line-height:1.5}
+  .panel{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 12px 35px rgba(35,61,110,.08);
+    padding:22px;
+  }
+  .topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .counter{font-weight:800}
+  .score{color:var(--muted);font-size:14px}
+  .progress{height:9px;background:#edf0f6;border-radius:99px;overflow:hidden;margin-bottom:24px}
+  .progress > div{height:100%;width:0;background:linear-gradient(90deg,#6ba5ff,#4f8df7);transition:width .25s}
+  .question{font-size:clamp(20px,4vw,28px);font-weight:750;line-height:1.35;margin:0 0 22px}
+  .answers{display:grid;gap:12px}
+  button{
+    font:inherit;
+    cursor:pointer;
+    border:0;
+  }
+  .answer{
+    text-align:left;
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    width:100%;
+    padding:16px;
+    border:1px solid var(--border);
+    border-radius:17px;
+    background:#fbfcff;
+    color:var(--text);
+    transition:transform .15s,border-color .15s,background .15s;
+  }
+  .answer:hover:not(:disabled){transform:translateY(-2px);border-color:#9bbcfb;background:#f4f8ff}
+  .letter{
+    flex:0 0 34px;height:34px;border-radius:11px;
+    display:grid;place-items:center;background:#edf2fb;font-weight:850;color:#52617b;
+  }
+  .answer-text{line-height:1.5;padding-top:3px}
+  .answer.correct{border-color:var(--correct);background:#eaf9f0}
+  .answer.correct .letter{background:var(--correct);color:white}
+  .answer.wrong{border-color:var(--wrong);background:#fff0f0}
+  .answer.wrong .letter{background:var(--wrong);color:white}
+  .answer:disabled{cursor:default}
+  .feedback{
+    display:none;margin-top:18px;padding:15px 16px;border-radius:15px;
+    line-height:1.5;font-size:15px
+  }
+  .feedback.show{display:block}
+  .feedback.correct{background:#eaf9f0;color:#176b40}
+  .feedback.wrong{background:#fff0f0;color:#9d3030}
+  .bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:22px}
+  .hint{font-size:13px;color:var(--muted)}
+  .next,.restart{
+    background:var(--primary);color:#fff;font-weight:800;
+    padding:13px 20px;border-radius:999px;
+  }
+  .next:hover,.restart:hover{background:var(--primary-dark)}
+  .next:disabled{opacity:.4;cursor:not-allowed}
+  .result{text-align:center;padding:12px 0}
+  .result-icon{font-size:54px}
+  .result h2{font-size:30px;margin:8px 0}
+  .result p{color:var(--muted);line-height:1.6}
+  .hidden{display:none}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:16px}
+  @media(max-width:480px){
+    .panel{padding:17px;border-radius:20px}
+    .answer{padding:13px}
+    .bottom{align-items:stretch;flex-direction:column}
+    .next,.restart{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="eyebrow">Bài trắc nghiệm</div>
+    <h1>Triết học Phật giáo</h1>
+    <p class="subtitle">Chọn đáp án đúng. Sau mỗi câu, bạn sẽ nhận được giải thích ngắn.</p>
+  </header>
+
+  <main class="panel" id="quizPanel">
+    <div class="topline">
+      <div class="counter" id="counter">Câu 1/4</div>
+      <div class="score" id="score">Đúng: 0</div>
+    </div>
+    <div class="progress"><div id="progressBar"></div></div>
+    <h2 class="question" id="question"></h2>
+    <div class="answers" id="answers"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="bottom">
+      <div class="hint" id="hint">Chọn một đáp án để tiếp tục.</div>
+      <button class="next" id="nextBtn" disabled>Câu tiếp theo →</button>
+    </div>
+  </main>
+
+  <section class="panel result hidden" id="resultPanel">
+    <div class="result-icon">🎉</div>
+    <h2 id="resultTitle">Hoàn thành!</h2>
+    <p id="resultText"></p>
+    <button class="restart" id="restartBtn">Làm lại bài</button>
+  </section>
+
+  <footer>Được tổng hợp từ các câu hỏi trong ảnh bạn gửi.</footer>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Từ bài học về “Cộng nghiệp gây ra dịch bệnh và chiến tranh”, xã hội cần ưu tiên giải pháp căn bản nào để xây dựng hòa bình?",
+    options: [
+      "Trừng phạt nghiêm khắc những cá nhân mang nghiệp riêng xấu.",
+      "Tìm kiếm sự che chở từ các đấng thần linh tối cao ngoài vũ trụ.",
+      "Đổ lỗi cho các thiên tai và hiện tượng thời tiết bất thường.",
+      "Chuyển hóa tâm thức cộng đồng, giảm bớt tham, sân, si."
+    ],
+    correct: 3,
+    explain: "Cộng nghiệp xuất phát từ tư duy và hành động chung của số đông. Vì vậy, chuyển hóa tâm thức cộng đồng và giảm tham, sân, si là giải pháp căn bản để xây dựng hòa bình."
+  },
+  {
+    q: "Nhận thức về sự tồn tại của “Phật tính” (Như Lai Tạng) trong mỗi chúng sinh đem lại bài học ý nghĩa nào cho sự phát triển bản thân?",
+    options: [
+      "Phủ nhận mọi vai trò của việc giáo dục và rèn luyện đạo đức.",
+      "Bắt buộc con người phải dựa vào lực lượng bên ngoài để tìm sự sáng suốt.",
+      "Cho rằng con người không cần nỗ lực vì vốn đã hoàn hảo sẵn.",
+      "Khẳng định mọi người đều có sẵn tiềm năng trí tuệ để tự rèn luyện."
+    ],
+    correct: 3,
+    explain: "Quan niệm Như Lai Tạng khẳng định mỗi người đều có tiềm năng thanh tịnh và trí tuệ; điều quan trọng là nỗ lực tu dưỡng, học tập và rèn luyện để phát huy tiềm năng đó."
+  },
+  {
+    q: "Mệnh đề “Tâm bình thế giới bình” (Vạn pháp duy thức) rút ra bài học thực tiễn nào cho việc cải thiện môi trường sống xung quanh?",
+    options: [
+      "Nhìn nhận môi trường bên ngoài là yếu tố quyết định hoàn toàn tâm trí.",
+      "Việc cải thiện môi trường xã hội hoàn toàn độc lập với suy nghĩ con người.",
+      "Muốn thay đổi thế giới bên ngoài cần bắt đầu từ cải thiện tâm thức nội tâm.",
+      "Chỉ cần tập trung thay đổi hoàn cảnh vật chất mà bỏ qua yếu tố tinh thần."
+    ],
+    correct: 2,
+    explain: "Theo tinh thần “Tâm bình thế giới bình”, trạng thái tâm thức ảnh hưởng đến cách ta nhìn nhận và hành động. Cải thiện nhận thức, đạo đức và tâm lý cá nhân là tiền đề để góp phần thay đổi môi trường xã hội."
+  },
+  {
+    q: "Bài học thực tiễn nào được rút ra từ nguyên lý “Bất cộng nghiệp” khi giải thích sự chênh lệch hoàn cảnh giữa các cá nhân?",
+    options: [
+      "Chịu trách nhiệm về lời nói, hành động và tư duy của chính mình.",
+      "So sánh và oán trách hoàn cảnh xuất thân không bằng người khác.",
+      "Tin rằng vận mệnh cá nhân do sự sắp đặt ngẫu nhiên của tự nhiên.",
+      "Đổ lỗi sự thất bại của bản thân cho lỗi lầm của cộng đồng."
+    ],
+    correct: 0,
+    explain: "Bất cộng nghiệp nhấn mạnh mỗi cá nhân gặt hái kết quả từ nghiệp riêng do chính mình tạo ra, từ đó khuyến khích tinh thần tự giác và trách nhiệm với lời nói, hành động, tư duy."
+  }
+];
+
+let index = 0;
+let score = 0;
+let answered = false;
+
+const counter = document.getElementById("counter");
+const scoreEl = document.getElementById("score");
+const progressBar = document.getElementById("progressBar");
+const questionEl = document.getElementById("question");
+const answersEl = document.getElementById("answers");
+const feedbackEl = document.getElementById("feedback");
+const nextBtn = document.getElementById("nextBtn");
+const hint = document.getElementById("hint");
+const quizPanel = document.getElementById("quizPanel");
+const resultPanel = document.getElementById("resultPanel");
+const resultTitle = document.getElementById("resultTitle");
+const resultText = document.getElementById("resultText");
+
+function renderQuestion(){
+  answered = false;
+  const item = questions[index];
+  counter.textContent = `Câu ${index + 1}/${questions.length}`;
+  scoreEl.textContent = `Đúng: ${score}`;
+  progressBar.style.width = `${(index / questions.length) * 100}%`;
+  questionEl.textContent = item.q;
+  answersEl.innerHTML = "";
+  feedbackEl.className = "feedback";
+  feedbackEl.textContent = "";
+  nextBtn.disabled = true;
+  nextBtn.textContent = index === questions.length - 1 ? "Xem kết quả →" : "Câu tiếp theo →";
+  hint.textContent = "Chọn một đáp án để tiếp tục.";
+
+  item.options.forEach((option, i) => {
+    const btn = document.createElement("button");
+    btn.className = "answer";
+    btn.innerHTML = `<span class="letter">${String.fromCharCode(65+i)}</span><span class="answer-text"></span>`;
+    btn.querySelector(".answer-text").textContent = option;
+    btn.addEventListener("click", () => chooseAnswer(i, btn));
+    answersEl.appendChild(btn);
+  });
+}
+
+function chooseAnswer(choice, selectedBtn){
+  if(answered) return;
+  answered = true;
+  const item = questions[index];
+  const buttons = [...answersEl.querySelectorAll("button")];
+  buttons.forEach(btn => btn.disabled = true);
+  buttons[item.correct].classList.add("correct");
+
+  if(choice === item.correct){
+    score++;
+    feedbackEl.className = "feedback show correct";
+    feedbackEl.innerHTML = `<strong>✓ Chính xác!</strong><br>${item.explain}`;
+  } else {
+    selectedBtn.classList.add("wrong");
+    feedbackEl.className = "feedback show wrong";
+    feedbackEl.innerHTML = `<strong>✕ Chưa đúng.</strong><br>Đáp án đúng là <strong>${String.fromCharCode(65+item.correct)}</strong>. ${item.explain}`;
+  }
+
+  scoreEl.textContent = `Đúng: ${score}`;
+  progressBar.style.width = `${((index + 1) / questions.length) * 100}%`;
+  nextBtn.disabled = false;
+  hint.textContent = "Bạn có thể chuyển sang câu tiếp theo.";
+}
+
+nextBtn.addEventListener("click", () => {
+  if(!answered) return;
+  if(index < questions.length - 1){
+    index++;
+    renderQuestion();
+  }else{
+    quizPanel.classList.add("hidden");
+    resultPanel.classList.remove("hidden");
+    const percent = Math.round(score / questions.length * 100);
+    resultTitle.textContent = percent >= 75 ? "Làm tốt lắm! 🎉" : "Đã hoàn thành!";
+    resultText.textContent = `Bạn trả lời đúng ${score}/${questions.length} câu (${percent}%). Hãy xem lại phần giải thích để ghi nhớ kiến thức.`;
+  }
+});
+
+document.getElementById("restartBtn").addEventListener("click", () => {
+  index = 0;
+  score = 0;
+  resultPanel.classList.add("hidden");
+  quizPanel.classList.remove("hidden");
+  renderQuestion();
+});
+
+renderQuestion();
+</script>
+</body>
+</html>
